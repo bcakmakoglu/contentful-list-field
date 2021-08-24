@@ -1,3 +1,18 @@
+# Contentful List Field
+
+![top-language](https://img.shields.io/github/languages/top/bcakmakoglu/contentful-list-field)
+[![dependencies Status](https://status.david-dm.org/gh/bcakmakoglu/contentful-list-field.svg)](https://david-dm.org/bcakmakoglu/contentful-list-field)
+[![devDependencies Status](https://status.david-dm.org/gh/bcakmakoglu/contentful-list-field.svg?type=dev)](https://david-dm.org/bcakmakoglu/contentful-list-field?type=dev)
+![vulnerabilities](https://img.shields.io/snyk/vulnerabilities/github/bcakmakoglu/contentful-list-field)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/bcakmakoglu/contentful-list-field)
+![GitHub last commit](https://img.shields.io/github/last-commit/bcakmakoglu/contentful-list-field)
+
+## What does this do?
+Similar to the Repeater App on the Contentful marketplace this app provides a
+custom entry field for JSON objects that will display a key-value list.
+Additionally, you can pass options when creating a Content Model which will be
+used as Select options in the entry editor.
+
 This project was bootstrapped with [Create Contentful App](https://github.com/contentful/create-contentful-app).
 
 ## Available Scripts
