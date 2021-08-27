@@ -8,6 +8,8 @@
     "@contentful/forma-36-fcss": "^0.3.4",
     "@contentful/forma-36-react-components": "^3.96.0",
     "@contentful/forma-36-tokens": "^0.11.1",
+    "@dnd-kit/core": "^3.1.1",
+    "@dnd-kit/sortable": "^4.0.0",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.0.0",
     "@testing-library/user-event": "^13.2.1",

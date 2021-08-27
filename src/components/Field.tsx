@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Button,
   EditorToolbarButton,
@@ -9,39 +9,18 @@ import {
   TextField,
   SelectField,
   RadioButtonField,
+  Pill,
   Option,
 } from '@contentful/forma-36-react-components';
 import tokens from '@contentful/forma-36-tokens';
 import { FieldExtensionSDK } from '@contentful/app-sdk';
 import { v4 as uuid } from 'uuid';
 import { css } from 'emotion';
+import TagList from './TagList';
+import { InstanceParameters, Item, Tag } from '../types';
 
 interface FieldProps {
   sdk: FieldExtensionSDK;
-}
-
-interface InstanceParameters {
-  options?: string;
-  checkbox?: boolean;
-}
-
-/** An Item which represents an list item of the repeater app */
-interface Item {
-  id: string;
-  key: string;
-  value: string;
-  checked?: boolean;
-}
-
-/** A simple utility function to create a 'blank' item
- * @returns A blank `Item` with a uuid
- */
-function createItem(): Item {
-  return {
-    id: uuid(),
-    key: '',
-    value: '',
-  };
 }
 
 /** The Field component is the Repeater App which shows up
@@ -50,10 +29,15 @@ function createItem(): Item {
  * The Field expects and uses a `Contentful JSON field`
  */
 const Field = (props: FieldProps) => {
-  const { valueName = 'Value' } = props.sdk.parameters.instance as any;
   const [items, setItems] = useState<Item[]>([]);
+  const params: InstanceParameters = props.sdk.parameters.instance;
+  const { valueName = 'Value' } = params;
 
   useEffect(() => {
+    resize();
+  });
+
+  const resize = () => {
     // This ensures our app has enough space to render
     props.sdk.window.startAutoResizer();
 
@@ -63,21 +47,33 @@ const Field = (props: FieldProps) => {
         setItems(value);
       }
     });
-  });
+  };
 
   /** Adds another item to the list */
   const addNewItem = () => {
-    props.sdk.field.setValue([...items, createItem()]);
+    const newItem = {
+      id: uuid(),
+      key: '',
+      value: params.taggable ? [] : '',
+    };
+    props.sdk.field.setValue([...items, newItem]);
   };
 
-  /** Creates an `onChange` handler for an item based on its `property`
-   * @returns A function which takes an `onChange` event
-   */
-  const createOnChangeHandler = (item: Item, property: 'key' | 'value') => (e: ChangeEvent<any>) => {
+  /** Handle change */
+  const onChange = (item: Item, val: string, property = 'value') => {
     const itemList = items.concat();
     const index = itemList.findIndex((i) => i.id === item.id);
-
-    itemList.splice(index, 1, { ...item, [property]: e.target.value });
+    let value: Item['value'] = val;
+    if (taggable(item) && Array.isArray(item.value)) {
+      const tag = val.split(':');
+      const newTag: Tag = {
+        id: `${item.value.length + 1}`,
+        key: tag[0] ?? '',
+        value: tag[1] ?? '',
+      };
+      value = [...item.value, newTag];
+    }
+    itemList.splice(index, 1, { ...item, [property]: value });
 
     props.sdk.field.setValue(itemList);
   };
@@ -87,9 +83,8 @@ const Field = (props: FieldProps) => {
     props.sdk.field.setValue(items.filter((i) => i.id !== item.id));
   };
 
-  const params: InstanceParameters = props.sdk.parameters.instance;
-
-  const setActiveOption = (item: Item, val: string) => {
+  /** Sets checked property of an item, unsets all others */
+  const setActiveOption = (item: Item) => {
     props.sdk.field.setValue(
       items.map((i) => {
         i.checked = item.id === i.id;
@@ -98,6 +93,18 @@ const Field = (props: FieldProps) => {
     );
   };
 
+  /** Removes a tag from item */
+  const removeTag = (item: Item, index: number) => {
+    const itemList = items.concat();
+    if (Array.isArray(item.value)) {
+      item.value.splice(index, 1);
+      props.sdk.field.setValue(itemList);
+    }
+  };
+
+  /** Checks if field values are taggable */
+  const taggable = (item: Item) => Array.isArray(item.value) && params.taggable;
+
   return (
     <div>
       <Table>
@@ -105,39 +112,32 @@ const Field = (props: FieldProps) => {
           {items.map((item) => (
             <TableRow key={item.id}>
               {params.checkbox ? (
-                <TableCell
-                  align="center"
-                  className={css({
-                    verticalAlign: 'middle',
-                  })}
-                >
+                <TableCell align="center">
                   <RadioButtonField
                     checked={item.checked}
                     value="true"
                     id="checkbox"
                     name="checkbox"
                     labelText=""
-                    onChange={(e) => {
-                      setActiveOption(item, e.target.value);
+                    onChange={() => {
+                      setActiveOption(item);
                     }}
                   />
                 </TableCell>
-              ) : (
-                ''
-              )}
+              ) : null}
               <TableCell>
                 <TextField
                   id="key"
                   name="key"
                   labelText="Key"
                   value={item.key}
-                  onChange={createOnChangeHandler(item, 'key')}
+                  onChange={(e) => onChange(item, e.target.value, 'key')}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell className={css({ maxWidth: 300 })}>
                 {params.options ? (
                   <SelectField
-                    onChange={createOnChangeHandler(item, 'value')}
+                    onChange={(e) => onChange(item, e.target.value)}
                     labelText="Options"
                     name="optionSelect"
                     id="optionSelect"
@@ -150,13 +150,48 @@ const Field = (props: FieldProps) => {
                     ))}
                   </SelectField>
                 ) : (
-                  <TextField
-                    id="value"
-                    name="value"
-                    labelText={valueName}
-                    value={item.value}
-                    onChange={createOnChangeHandler(item, 'value')}
-                  />
+                  <>
+                    <TextField
+                      id="value"
+                      name="value"
+                      value={taggable(item) ? '' : (item.value as string)}
+                      labelText={valueName}
+                      textInputProps={{
+                        onKeyDown: (e: { key: string; target: Record<string, any> }) => {
+                          if (e.key === 'Enter') {
+                            if (taggable(item)) {
+                              onChange(item, e.target.value);
+                            }
+                          }
+                        },
+                      }}
+                    />
+                    {Array.isArray(item.value) && taggable(item) ? (
+                      <TagList
+                        tags={item.value}
+                        onSort={(tags) => {
+                          const itemList = items.concat();
+                          item.value = tags;
+                          props.sdk.field.setValue(itemList);
+                        }}
+                      >
+                        {item.value.map((tag, i) => (
+                          <Pill
+                            key={`tag-${i}`}
+                            className={css({
+                              marginRight: tokens.spacingS,
+                              marginTop: tokens.spacingS,
+                            })}
+                            tabIndex={0}
+                            testId="pill-item"
+                            label={`${tag.key}${tag.value ? ` ➡️ ${tag.value}` : ''}`}
+                            onClose={() => removeTag(item, i)}
+                            onDrag={() => {}}
+                          />
+                        ))}
+                      </TagList>
+                    ) : null}
+                  </>
                 )}
               </TableCell>
               <TableCell align="right">
