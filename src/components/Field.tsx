@@ -8,14 +8,21 @@ import {
   TableCell,
   TextField,
   SelectField,
+  RadioButtonField,
   Option,
 } from '@contentful/forma-36-react-components';
 import tokens from '@contentful/forma-36-tokens';
 import { FieldExtensionSDK } from '@contentful/app-sdk';
 import { v4 as uuid } from 'uuid';
+import { css } from 'emotion';
 
 interface FieldProps {
   sdk: FieldExtensionSDK;
+}
+
+interface InstanceParameters {
+  options?: string;
+  checkbox?: boolean;
 }
 
 /** An Item which represents an list item of the repeater app */
@@ -23,6 +30,7 @@ interface Item {
   id: string;
   key: string;
   value: string;
+  checked?: boolean;
 }
 
 /** A simple utility function to create a 'blank' item
@@ -79,63 +87,89 @@ const Field = (props: FieldProps) => {
     props.sdk.field.setValue(items.filter((i) => i.id !== item.id));
   };
 
+  const params: InstanceParameters = props.sdk.parameters.instance;
+
+  const setActiveOption = (item: Item, val: string) => {
+    props.sdk.field.setValue(
+      items.map((i) => {
+        i.checked = item.id === i.id;
+        return i;
+      })
+    );
+  };
+
   return (
-      <div>
-        <Table>
-          <TableBody>
-            {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <TextField
-                        id="key"
-                        name="key"
-                        labelText="Key"
-                        value={item.key}
-                        onChange={createOnChangeHandler(item, 'key')}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {Object.keys(props.sdk.parameters.instance).length > 0 ? (
-                        <SelectField
-                            onChange={createOnChangeHandler(item, 'value')}
-                            labelText="Options"
-                            name="optionSelect"
-                            id="optionSelect"
-                        >
-                          <Option value="" disabled selected>
-                            Select an option...
-                          </Option>
-                          {Object.keys(props.sdk.parameters.instance).map((param) => {
-                            if (param.toLowerCase() === 'options') {
-                              const options: string[] = (props.sdk.parameters.instance as any)[param].split('|');
-                              return options.map((option) => {
-                                return <Option value={option}>{option}</Option>;
-                              });
-                            }
-                            return '';
-                          })}
-                        </SelectField>
-                    ) : (
-                        <TextField
-                            id="value"
-                            name="value"
-                            labelText={valueName}
-                            value={item.value}
-                            onChange={createOnChangeHandler(item, 'value')}
-                        />
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    <EditorToolbarButton label="delete" icon="Delete" onClick={() => deleteItem(item)} />
-                  </TableCell>
-                </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Button buttonType="naked" onClick={addNewItem} icon="PlusCircle" style={{ marginTop: tokens.spacingS }}>
-          Add Item
-        </Button>
-      </div>
+    <div>
+      <Table>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow key={item.id}>
+              {params.checkbox ? (
+                <TableCell
+                  align="center"
+                  className={css({
+                    verticalAlign: 'middle',
+                  })}
+                >
+                  <RadioButtonField
+                    checked={item.checked}
+                    value="true"
+                    id="checkbox"
+                    name="checkbox"
+                    labelText=""
+                    onChange={(e) => {
+                      setActiveOption(item, e.target.value);
+                    }}
+                  />
+                </TableCell>
+              ) : (
+                ''
+              )}
+              <TableCell>
+                <TextField
+                  id="key"
+                  name="key"
+                  labelText="Key"
+                  value={item.key}
+                  onChange={createOnChangeHandler(item, 'key')}
+                />
+              </TableCell>
+              <TableCell>
+                {params.options ? (
+                  <SelectField
+                    onChange={createOnChangeHandler(item, 'value')}
+                    labelText="Options"
+                    name="optionSelect"
+                    id="optionSelect"
+                  >
+                    <Option value="" disabled selected>
+                      Select an option...
+                    </Option>
+                    {params.options.split('|').map((option) => (
+                      <Option value={option}>{option}</Option>
+                    ))}
+                  </SelectField>
+                ) : (
+                  <TextField
+                    id="value"
+                    name="value"
+                    labelText={valueName}
+                    value={item.value}
+                    onChange={createOnChangeHandler(item, 'value')}
+                  />
+                )}
+              </TableCell>
+              <TableCell align="right">
+                <EditorToolbarButton label="delete" icon="Delete" onClick={() => deleteItem(item)} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <Button buttonType="naked" onClick={addNewItem} icon="PlusCircle" style={{ marginTop: tokens.spacingS }}>
+        Add Item
+      </Button>
+    </div>
   );
 };
 
