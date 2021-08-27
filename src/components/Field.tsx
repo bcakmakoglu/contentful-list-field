@@ -64,14 +64,26 @@ const Field = (props: FieldProps) => {
     const itemList = items.concat();
     const index = itemList.findIndex((i) => i.id === item.id);
     let value: Item['value'] = val;
-    if (taggable(item) && Array.isArray(item.value)) {
-      const tag = val.split(':');
-      const newTag: Tag = {
-        id: `${item.value.length + 1}`,
-        key: tag[0] ?? '',
-        value: tag[1] ?? '',
-      };
-      value = [...item.value, newTag];
+    if (taggable(item)) {
+      // clear whitespace and split possible multiple tags
+      const tags = val.replace(/\s+/g, '').split(',');
+      const newTags: Tag[] = [];
+      let id = -1;
+      tags.forEach((tag) => {
+        // split into key value (i.e. key:value => { key: string, value: string })
+        const [k, v] = tag.split(':');
+        if (item.value.length > 0 && id === -1) {
+          id = parseInt(((item.value as Tag[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id), 10);
+        }
+        id++;
+        const newTag: Tag = {
+          id: `${id}`,
+          key: k ?? '',
+          value: v ?? '',
+        };
+        newTags.push(newTag);
+      });
+      value = [...(item.value as Tag[]), ...newTags];
     }
     itemList.splice(index, 1, { ...item, [property]: value });
 
@@ -110,7 +122,7 @@ const Field = (props: FieldProps) => {
       <Table>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id}>
+            <TableRow key={`row-${item.id}`}>
               {params.checkbox ? (
                 <TableCell align="center">
                   <RadioButtonField
