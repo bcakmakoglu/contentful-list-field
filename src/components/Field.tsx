@@ -31,7 +31,7 @@ interface FieldProps {
 const Field = (props: FieldProps) => {
   const [items, setItems] = useState<Item[]>([]);
   const params: InstanceParameters = props.sdk.parameters.instance;
-  const { valueName = 'Value' } = params;
+  const { valueName = 'Value', keyName = 'Key' } = params;
 
   useEffect(() => {
     resize();
@@ -64,16 +64,16 @@ const Field = (props: FieldProps) => {
     const itemList = items.concat();
     const index = itemList.findIndex((i) => i.id === item.id);
     let value: Item['value'] = val;
-    if (taggable(item)) {
+    if (taggable(item) && property === 'value') {
       // clear whitespace and split possible multiple tags
-      const tags = val.replace(/\s+/g, '').split(',');
+      const tags = strip(val).split(',');
       const newTags: Tag[] = [];
       let id = -1;
       tags.forEach((tag) => {
         // split into key value (i.e. key:value => { key: string, value: string })
         const [k, v] = tag.split(':');
         if (item.value.length > 0 && id === -1) {
-          id = parseInt(((item.value as Tag[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id), 10);
+          id = parseInt((item.value as Tag[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id, 10);
         }
         id++;
         const newTag: Tag = {
@@ -121,7 +121,7 @@ const Field = (props: FieldProps) => {
     <div>
       <Table>
         <TableBody>
-          {items.map((item) => (
+          {items.map((item, index) => (
             <TableRow key={`row-${item.id}`}>
               {params.checkbox ? (
                 <TableCell align="center">
@@ -138,16 +138,44 @@ const Field = (props: FieldProps) => {
                 </TableCell>
               ) : null}
               <TableCell>
-                <TextField
-                  id="key"
-                  name="key"
-                  labelText="Key"
-                  value={item.key}
-                  onChange={(e) => onChange(item, e.target.value, 'key')}
-                />
+                {params.keyOptions ? (
+                  <SelectField
+                    onChange={(e) => onChange(item, e.target.value, 'key')}
+                    labelText={keyName}
+                    name="optionSelect"
+                    id="optionSelect"
+                  >
+                    <Option value="" disabled>
+                      {keyName ? keyName : 'Select a key'}
+                    </Option>
+                    {strip(params.keyOptions)
+                      .split('|')
+                      .map((option) => (
+                        <Option
+                          key={option}
+                          disabled={params.uniqueKeys && items.some((i) => i.key === option)}
+                          selected={option === item.key}
+                          value={option}
+                        >
+                          {option}
+                        </Option>
+                      ))}
+                  </SelectField>
+                ) : (
+                  <TextField
+                    id="key"
+                    name="key"
+                    labelText={keyName}
+                    value={item.key}
+                    onChange={(e) => onChange(item, e.target.value, 'key')}
+                    textInputProps={{
+                      error: params.uniqueKeys && items.some((i, y) => index !== y && i.key === item.key),
+                    }}
+                  />
+                )}
               </TableCell>
-              <TableCell className={css({ maxWidth: 300 })}>
-                {params.options ? (
+              <TableCell className={css({ maxWidth: 320 })}>
+                {params.valueOptions ? (
                   <SelectField
                     onChange={(e) => onChange(item, e.target.value)}
                     labelText="Options"
@@ -155,11 +183,15 @@ const Field = (props: FieldProps) => {
                     id="optionSelect"
                   >
                     <Option value="" disabled selected>
-                      Select an option...
+                      {valueName ? valueName : 'Select a value'}
                     </Option>
-                    {params.options.split('|').map((option) => (
-                      <Option value={option}>{option}</Option>
-                    ))}
+                    {strip(params.valueOptions)
+                      .split('|')
+                      .map((option) => (
+                        <Option key={option} value={option}>
+                          {option}
+                        </Option>
+                      ))}
                   </SelectField>
                 ) : (
                   <>
@@ -170,10 +202,12 @@ const Field = (props: FieldProps) => {
                       labelText={valueName}
                       textInputProps={{
                         onKeyDown: (e: { key: string; target: Record<string, any> }) => {
-                          if (e.key === 'Enter') {
-                            if (taggable(item)) {
+                          if (taggable(item)) {
+                            if (e.key === 'Enter') {
                               onChange(item, e.target.value);
                             }
+                          } else {
+                            onChange(item, e.target.value);
                           }
                         },
                       }}
@@ -218,6 +252,10 @@ const Field = (props: FieldProps) => {
       </Button>
     </div>
   );
+
+  function strip(str: string): string {
+    return str.replace(/\s+/g, '');
+  }
 };
 
 export default Field;
