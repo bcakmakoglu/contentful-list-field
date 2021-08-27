@@ -18,10 +18,12 @@ This project was bootstrapped with [Create Contentful App](https://github.com/co
 ## Instance properties
 You can pass these options when creating an app instance (i.e. applying the app on a content model).
 
-* options - list of strings separated by a `|`, each string will be displayed as an option (ex: hwo|bundle|foo)
+* keyOptions/valueOptions - list of strings separated by a `|`, each string will be displayed as an option for keys/values (ex: foo|bar|baz)
 * checkbox - display a checkbox in each row, can only be uniquely selected
 * taggable - enable value inputs to be passed as tags
 * valueName - an alternative name to display for the value property
+* keyName - an alternative name to display for the key property
+* uniqueKeys - enable validation check for unique keys
 
 ## Available Scripts
 
