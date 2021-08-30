@@ -29,5 +29,6 @@ export type Value<Type = void> = Type extends Entity ? Entity[] : Tag[] | string
 
 export interface Entity {
   id: string;
-  [key: string]: string;
+  title: string;
+  data: Tag[];
 }

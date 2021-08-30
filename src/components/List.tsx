@@ -6,18 +6,17 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Tag as TTag } from '../types';
-import Tag from './Tag';
+import Tag from './ListItem';
 
-interface TagListProps {
-  tags: TTag[];
-  onSort: (tags: TTag[]) => void;
+interface ListProps {
+  items: any[];
+  onSort?: (items: any[]) => void;
   children?: ReactElement[];
 }
 
-const TagList = ({ tags, onSort = () => {}, children }: TagListProps) => {
-  const [items, setItems] = useState(tags);
-  useEffect(() => setItems(() => tags), [tags]);
+const List = ({ items: propitems, onSort = () => {}, children }: ListProps) => {
+  const [items, setItems] = useState(propitems);
+  useEffect(() => setItems(() => propitems), [propitems]);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -43,9 +42,9 @@ const TagList = ({ tags, onSort = () => {}, children }: TagListProps) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
-      const activeTag = items.find((item) => item.id === active.id) as TTag;
+      const activeTag = items.find((item) => item.id === active.id);
       const oldIndex = items.indexOf(activeTag);
-      const overTag = items.find((item) => item.id === over.id) as TTag;
+      const overTag = items.find((item) => item.id === over.id);
       const newIndex = items.indexOf(overTag);
       setItems((items) => {
         return arrayMove(items, oldIndex, newIndex);
@@ -55,4 +54,4 @@ const TagList = ({ tags, onSort = () => {}, children }: TagListProps) => {
   }
 };
 
-export default TagList;
+export default List;

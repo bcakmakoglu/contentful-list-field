@@ -20,8 +20,22 @@ const DropDown = ({ onSelect = (type: 'string' | 'entity') => {} }) => {
       }
     >
       <DropdownList>
-        <DropdownListItem onClick={() => onSelect('entity')}>Entity</DropdownListItem>
-        <DropdownListItem onClick={() => onSelect('string')}>Default</DropdownListItem>
+        <DropdownListItem
+          onClick={() => {
+            onSelect('entity');
+            setOpen(() => false);
+          }}
+        >
+          Entity
+        </DropdownListItem>
+        <DropdownListItem
+          onClick={() => {
+            setOpen(() => false);
+            onSelect('string');
+          }}
+        >
+          Default
+        </DropdownListItem>
       </DropdownList>
     </Dropdown>
   );

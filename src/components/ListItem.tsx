@@ -2,7 +2,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const Tag = ({ id, children }: { id: string; children: any }) => {
+const ListItem = ({ id, children }: { id: string; children: any }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const style: any = {
@@ -17,4 +17,4 @@ const Tag = ({ id, children }: { id: string; children: any }) => {
   );
 };
 
-export default Tag;
+export default ListItem;

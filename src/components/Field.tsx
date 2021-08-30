@@ -15,25 +15,34 @@ import {
 import tokens from '@contentful/forma-36-tokens';
 import { FieldExtensionSDK } from '@contentful/app-sdk';
 import { css } from 'emotion';
-import TagList from './TagList';
+import List from './List';
 import { Entity, InstanceParameters, Item, Tag } from '../types';
 import DropDown from './DropDown';
-import ItemList from './ItemList';
-import { createEntity, createItem } from '../utils';
+import EntityList from './EntityList';
+import { createEntity, createItem, strip } from '../utils';
 
 interface FieldProps {
   sdk: FieldExtensionSDK;
 }
 
-/** The Field component is the Repeater App which shows up
+/**
+ * The Field component is the List App which shows up
  * in the Contentful field.
  *
- * The Field expects and uses a `Contentful JSON field`
+ * The Field expects and uses a `Contentful JSON field`.
  */
 const Field = (props: FieldProps) => {
   const [items, setItems] = useState<Item[]>([]);
-  const params: InstanceParameters = props.sdk.parameters.instance;
-  const { valueName = 'Value', keyName = 'Key' } = params;
+  const {
+    valueName = 'Value',
+    keyName = 'Key',
+    valueOptions = undefined,
+    keyOptions = undefined,
+    uniqueKeys = false,
+    checkbox = false,
+    taggable = false,
+  }: InstanceParameters = props.sdk.parameters.instance;
+  const itemTaggable = (item: Item) => Array.isArray(item.value) && taggable;
 
   useEffect(() => {
     resize();
@@ -53,7 +62,7 @@ const Field = (props: FieldProps) => {
 
   /** Adds another item to the list */
   const addNewItem = (type: 'string' | 'entity' = 'string') => {
-    const item = createItem(type, params.taggable);
+    const item = createItem(type, taggable);
     props.sdk.field.setValue([...items, item]);
   };
 
@@ -62,7 +71,7 @@ const Field = (props: FieldProps) => {
     const itemList = items.concat();
     const index = itemList.findIndex((i) => i.id === item.id);
     let value: Item['value'] = val;
-    if (taggable(item) && property === 'value') {
+    if (itemTaggable(item) && property === 'value') {
       // clear whitespace and split possible multiple tags
       const tags = strip(val).split(',');
       const newTags: Tag[] = [];
@@ -112,36 +121,69 @@ const Field = (props: FieldProps) => {
     }
   };
 
-  /** Checks if field values are taggable */
-  const taggable = (item: Item) => Array.isArray(item.value) && params.taggable;
+  const saveValue = (item: Item, entity: Entity, index: number) => {
+    const itemList = items.concat();
+    if (Array.isArray(item.value)) {
+      item.value.splice(index, 1, entity);
+      props.sdk.field.setValue(itemList);
+    }
+  };
 
   const Value = (item: Item) => {
     let component;
     switch (item.type) {
       case 'entity':
         component = (
-          <ItemList items={(item as Item<'entity'>).value} onRemove={(_, i) => {
-            removeValue(item, i)
-          }}>
-            <Button
-              size="small"
-              buttonType="naked"
-              icon="PlusCircle"
-              onClick={() => {
+          <>
+            <div
+              id="entity-list-label"
+              className={css({
+                display: 'inline-block',
+                color: '#111b2b',
+                fontWeight: 500,
+                marginBottom: '.5rem',
+              })}
+            >
+              {valueName}
+            </div>
+            <EntityList
+              items={(item as Item<'entity'>).value}
+              onRemove={(_, i) => {
+                removeValue(item, i);
+              }}
+              onSave={(entity) => {
+                saveValue(item, entity, (item.value as Entity[]).indexOf(entity));
+              }}
+              onSort={(entities) => {
                 const itemList = items.concat();
-                item.value = [...(item.value as Entity[]), createEntity()];
+                itemList[itemList.indexOf(item)].value = entities;
                 props.sdk.field.setValue(itemList);
               }}
-              style={{ marginTop: tokens.spacingS }}
             >
-              Add entity
-            </Button>
-          </ItemList>
+              <Button
+                size="small"
+                buttonType="naked"
+                icon="PlusCircle"
+                onClick={() => {
+                  const itemList = items.concat();
+                  const id = parseInt(
+                    (item.value as Entity[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id,
+                    10
+                  );
+                  item.value = [...(item.value as Entity[]), createEntity({ id: `${id + 1}` })];
+                  props.sdk.field.setValue(itemList);
+                }}
+                style={{ marginTop: tokens.spacingS }}
+              >
+                Add Entity
+              </Button>
+            </EntityList>
+          </>
         );
         break;
       case 'string':
       default:
-        component = params.valueOptions ? (
+        component = valueOptions ? (
           <SelectField
             onChange={(e) => onChange(item, e.target.value)}
             labelText="Options"
@@ -151,7 +193,7 @@ const Field = (props: FieldProps) => {
             <Option value="" disabled selected>
               {valueName ? valueName : 'Select a value'}
             </Option>
-            {strip(params.valueOptions)
+            {strip(valueOptions)
               .split('|')
               .map((option) => (
                 <Option key={option} value={option}>
@@ -164,16 +206,16 @@ const Field = (props: FieldProps) => {
             <TextField
               id="value"
               name="value"
-              value={taggable(item) ? '' : (item.value as string)}
+              value={itemTaggable(item) ? '' : (item.value as string)}
               labelText={valueName}
               onChange={(e) => {
-                if (!taggable(item)) {
+                if (!itemTaggable(item)) {
                   onChange(item, e.target.value);
                 }
               }}
               textInputProps={{
                 onKeyDown: (e: { key: string; target: Record<string, any> }) => {
-                  if (taggable(item)) {
+                  if (itemTaggable(item)) {
                     if (e.key === 'Enter') {
                       onChange(item, e.target.value);
                     }
@@ -181,16 +223,16 @@ const Field = (props: FieldProps) => {
                 },
               }}
             />
-            {Array.isArray(item.value) && taggable(item) ? (
-              <TagList
-                tags={item.value as Tag[]}
+            {Array.isArray(item.value) && itemTaggable(item) ? (
+              <List
+                items={item.value}
                 onSort={(tags) => {
                   const itemList = items.concat();
                   item.value = tags;
                   props.sdk.field.setValue(itemList);
                 }}
               >
-                {item.value.map((tag, i) => (
+                {(item.value as Tag[]).map((tag, i) => (
                   <Pill
                     key={`tag-${i}`}
                     className={css({
@@ -204,7 +246,7 @@ const Field = (props: FieldProps) => {
                     onDrag={() => {}}
                   />
                 ))}
-              </TagList>
+              </List>
             ) : null}
           </>
         );
@@ -214,77 +256,80 @@ const Field = (props: FieldProps) => {
   };
 
   return (
-    <div>
+    <div className={css({ minHeight: 260 })}>
       <Table>
         <TableBody>
-          {items.map((item, index) => (
-            <TableRow key={`row-${item.id}`}>
-              {params.checkbox ? (
-                <TableCell align="center">
-                  <RadioButtonField
-                    checked={item.checked}
-                    value="true"
-                    id="checkbox"
-                    name="checkbox"
-                    labelText=""
-                    onChange={() => {
-                      setActiveOption(item);
-                    }}
-                  />
+          <List
+            items={items}
+            onSort={(items) => {
+              props.sdk.field.setValue(items);
+            }}
+          >
+            {items.map((item, index) => (
+              <TableRow key={`row-${item.id}`}>
+                {checkbox ? (
+                  <TableCell align="center">
+                    <RadioButtonField
+                      checked={item.checked}
+                      value="true"
+                      id="checkbox"
+                      name="checkbox"
+                      labelText=""
+                      onChange={() => {
+                        setActiveOption(item);
+                      }}
+                    />
+                  </TableCell>
+                ) : null}
+                <TableCell>
+                  {keyOptions ? (
+                    <SelectField
+                      onChange={(e) => onChange(item, e.target.value, 'key')}
+                      labelText={keyName}
+                      name="optionSelect"
+                      id="optionSelect"
+                    >
+                      <Option value="" disabled>
+                        {keyName ? keyName : 'Select a key'}
+                      </Option>
+                      {strip(keyOptions)
+                        .split('|')
+                        .map((option) => (
+                          <Option
+                            key={option}
+                            disabled={uniqueKeys && items.some((i) => i.key === option)}
+                            selected={option === item.key}
+                            value={option}
+                          >
+                            {option}
+                          </Option>
+                        ))}
+                    </SelectField>
+                  ) : (
+                    <TextField
+                      id="key"
+                      name="key"
+                      labelText={keyName}
+                      value={item.key}
+                      onChange={(e) => onChange(item, e.target.value, 'key')}
+                      textInputProps={{
+                        error: uniqueKeys && items.some((i, y) => index !== y && i.key === item.key),
+                      }}
+                    />
+                  )}
                 </TableCell>
-              ) : null}
-              <TableCell>
-                {params.keyOptions ? (
-                  <SelectField
-                    onChange={(e) => onChange(item, e.target.value, 'key')}
-                    labelText={keyName}
-                    name="optionSelect"
-                    id="optionSelect"
-                  >
-                    <Option value="" disabled>
-                      {keyName ? keyName : 'Select a key'}
-                    </Option>
-                    {strip(params.keyOptions)
-                      .split('|')
-                      .map((option) => (
-                        <Option
-                          key={option}
-                          disabled={params.uniqueKeys && items.some((i) => i.key === option)}
-                          selected={option === item.key}
-                          value={option}
-                        >
-                          {option}
-                        </Option>
-                      ))}
-                  </SelectField>
-                ) : (
-                  <TextField
-                    id="key"
-                    name="key"
-                    labelText={keyName}
-                    value={item.key}
-                    onChange={(e) => onChange(item, e.target.value, 'key')}
-                    textInputProps={{
-                      error: params.uniqueKeys && items.some((i, y) => index !== y && i.key === item.key),
-                    }}
-                  />
-                )}
-              </TableCell>
-              <TableCell className={css({ maxWidth: 320 })}>{Value(item)}</TableCell>
-              <TableCell align="right">
-                <EditorToolbarButton label="delete" icon="Delete" onClick={() => deleteItem(item)} />
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell className={css({ maxWidth: 320 })}>{Value(item)}</TableCell>
+                <TableCell align="right">
+                  <EditorToolbarButton label="delete" icon="Delete" onClick={() => deleteItem(item)} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </List>
         </TableBody>
       </Table>
       <DropDown onSelect={addNewItem} />
     </div>
   );
-
-  function strip(str: string): string {
-    return str.replace(/\s+/g, '');
-  }
 };
 
 export default Field;
