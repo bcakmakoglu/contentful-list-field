@@ -33,6 +33,7 @@ interface FieldProps {
  */
 const Field = ({ sdk }: FieldProps) => {
   const [items, setItems] = useState<Item[]>([]);
+  const [dropDownOpen, setDropDownOpen] = useState(false);
   const window: WindowAPI | null = sdk.window ?? null;
   const field: FieldAPI | null = sdk.field ?? null;
   const {
@@ -45,7 +46,6 @@ const Field = ({ sdk }: FieldProps) => {
     taggable = false,
   }: InstanceParameters = sdk.parameters?.instance ?? {};
   const itemTaggable = (item: Item) => Array.isArray(item.value) && taggable;
-  window?.updateHeight(260);
 
   useEffect(() => {
     resize();
@@ -298,7 +298,7 @@ const Field = ({ sdk }: FieldProps) => {
   };
 
   return (
-    <div className={css({ minHeight: 260 })}>
+    <div className={css({ minHeight: dropDownOpen ? 140 : undefined })}>
       <Table data-testid="list-field">
         <TableBody>
           <List
@@ -333,7 +333,10 @@ const Field = ({ sdk }: FieldProps) => {
           </List>
         </TableBody>
       </Table>
-      <DropDown onSelect={addNewItem} />
+      <DropDown
+        onToggle={(open) => setDropDownOpen(open)}
+        onSelect={addNewItem}
+      />
     </div>
   );
 };
