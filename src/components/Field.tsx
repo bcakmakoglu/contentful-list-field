@@ -13,13 +13,13 @@ import {
   Button,
 } from '@contentful/forma-36-react-components';
 import tokens from '@contentful/forma-36-tokens';
-import { FieldExtensionSDK } from '@contentful/app-sdk';
+import { FieldAPI, FieldExtensionSDK, WindowAPI } from '@contentful/app-sdk';
 import { css } from 'emotion';
 import List from './List';
 import { Entity, InstanceParameters, Item, Tag } from '../types';
 import DropDown from './DropDown';
 import EntityList from './EntityList';
-import { createEntity, createItem, strip } from '../utils';
+import { createEntity, createItem, createTag, strip } from '../utils';
 
 interface FieldProps {
   sdk: FieldExtensionSDK;
@@ -31,8 +31,10 @@ interface FieldProps {
  *
  * The Field expects and uses a `Contentful JSON field`.
  */
-const Field = (props: FieldProps) => {
+const Field = ({ sdk }: FieldProps) => {
   const [items, setItems] = useState<Item[]>([]);
+  const window: WindowAPI | null = sdk.window ?? null;
+  const field: FieldAPI | null = sdk.field ?? null;
   const {
     valueName = 'Value',
     keyName = 'Key',
@@ -41,8 +43,9 @@ const Field = (props: FieldProps) => {
     uniqueKeys = false,
     checkbox = false,
     taggable = false,
-  }: InstanceParameters = props.sdk.parameters.instance;
+  }: InstanceParameters = sdk.parameters?.instance ?? {};
   const itemTaggable = (item: Item) => Array.isArray(item.value) && taggable;
+  window?.updateHeight(260);
 
   useEffect(() => {
     resize();
@@ -50,10 +53,10 @@ const Field = (props: FieldProps) => {
 
   const resize = () => {
     // This ensures our app has enough space to render
-    props.sdk.window.startAutoResizer();
+    window?.startAutoResizer();
 
     // Every time we change the value on the field, we update internal state
-    props.sdk.field.onValueChanged((value: Item[]) => {
+    field?.onValueChanged((value: Item[]) => {
       if (Array.isArray(value)) {
         setItems(value);
       }
@@ -63,7 +66,7 @@ const Field = (props: FieldProps) => {
   /** Adds another item to the list */
   const addNewItem = (type: 'string' | 'entity' = 'string') => {
     const item = createItem(type, taggable);
-    props.sdk.field.setValue([...items, item]);
+    field?.setValue([...items, item]);
   };
 
   /** Handle change */
@@ -83,28 +86,29 @@ const Field = (props: FieldProps) => {
           id = parseInt((item.value as Tag[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id, 10);
         }
         id++;
-        const newTag: Tag = {
-          id: `${id}`,
-          key: k ?? '',
-          value: v ?? '',
-        };
-        newTags.push(newTag);
+        newTags.push(
+          createTag({
+            id: `${id}`,
+            key: k ?? '',
+            value: v ?? '',
+          })
+        );
       });
       value = [...(item.value as Tag[]), ...newTags];
     }
     itemList.splice(index, 1, { ...item, [property]: value });
 
-    props.sdk.field.setValue(itemList);
+    field?.setValue(itemList);
   };
 
   /** Deletes an item from the list */
   const deleteItem = (item: Item) => {
-    props.sdk.field.setValue(items.filter((i) => i.id !== item.id));
+    field?.setValue(items.filter((i) => i.id !== item.id));
   };
 
   /** Sets checked property of an item, unsets all others */
   const setActiveOption = (item: Item) => {
-    props.sdk.field.setValue(
+    field?.setValue(
       items.map((i) => {
         i.checked = item.id === i.id;
         return i;
@@ -117,7 +121,7 @@ const Field = (props: FieldProps) => {
     const itemList = items.concat();
     if (Array.isArray(item.value)) {
       item.value.splice(index, 1);
-      props.sdk.field.setValue(itemList);
+      field?.setValue(itemList);
     }
   };
 
@@ -125,7 +129,7 @@ const Field = (props: FieldProps) => {
     const itemList = items.concat();
     if (Array.isArray(item.value)) {
       item.value.splice(index, 1, entity);
-      props.sdk.field.setValue(itemList);
+      field?.setValue(itemList);
     }
   };
 
@@ -157,7 +161,7 @@ const Field = (props: FieldProps) => {
               onSort={(entities) => {
                 const itemList = items.concat();
                 itemList[itemList.indexOf(item)].value = entities;
-                props.sdk.field.setValue(itemList);
+                field?.setValue(itemList);
               }}
             >
               <Button
@@ -171,7 +175,7 @@ const Field = (props: FieldProps) => {
                     10
                   );
                   item.value = [...(item.value as Entity[]), createEntity({ id: `${id + 1}` })];
-                  props.sdk.field.setValue(itemList);
+                  field?.setValue(itemList);
                 }}
                 style={{ marginTop: tokens.spacingS }}
               >
@@ -229,7 +233,7 @@ const Field = (props: FieldProps) => {
                 onSort={(tags) => {
                   const itemList = items.concat();
                   item.value = tags;
-                  props.sdk.field.setValue(itemList);
+                  field?.setValue(itemList);
                 }}
               >
                 {(item.value as Tag[]).map((tag, i) => (
@@ -255,14 +259,52 @@ const Field = (props: FieldProps) => {
     return component;
   };
 
+  const Key = (item: Item, index: number) => {
+    return keyOptions ? (
+      <SelectField
+        onChange={(e) => onChange(item, e.target.value, 'key')}
+        labelText={keyName}
+        name="optionSelect"
+        id="optionSelect"
+      >
+        <Option value="" disabled>
+          {keyName ? keyName : 'Select a key'}
+        </Option>
+        {strip(keyOptions)
+          .split('|')
+          .map((option) => (
+            <Option
+              key={option}
+              disabled={uniqueKeys && items.some((i, y) => index !== y && i.key === option)}
+              selected={option === item.key}
+              value={option}
+            >
+              {option}
+            </Option>
+          ))}
+      </SelectField>
+    ) : (
+      <TextField
+        id="key"
+        name="key"
+        labelText={keyName}
+        value={item.key}
+        onChange={(e) => onChange(item, e.target.value, 'key')}
+        textInputProps={{
+          error: uniqueKeys && items.some((i, y) => index !== y && i.key === item.key),
+        }}
+      />
+    );
+  };
+
   return (
     <div className={css({ minHeight: 260 })}>
-      <Table>
+      <Table data-testid="list-field">
         <TableBody>
           <List
             items={items}
             onSort={(items) => {
-              props.sdk.field.setValue(items);
+              field?.setValue(items);
             }}
           >
             {items.map((item, index) => (
@@ -281,43 +323,7 @@ const Field = (props: FieldProps) => {
                     />
                   </TableCell>
                 ) : null}
-                <TableCell>
-                  {keyOptions ? (
-                    <SelectField
-                      onChange={(e) => onChange(item, e.target.value, 'key')}
-                      labelText={keyName}
-                      name="optionSelect"
-                      id="optionSelect"
-                    >
-                      <Option value="" disabled>
-                        {keyName ? keyName : 'Select a key'}
-                      </Option>
-                      {strip(keyOptions)
-                        .split('|')
-                        .map((option) => (
-                          <Option
-                            key={option}
-                            disabled={uniqueKeys && items.some((i) => i.key === option)}
-                            selected={option === item.key}
-                            value={option}
-                          >
-                            {option}
-                          </Option>
-                        ))}
-                    </SelectField>
-                  ) : (
-                    <TextField
-                      id="key"
-                      name="key"
-                      labelText={keyName}
-                      value={item.key}
-                      onChange={(e) => onChange(item, e.target.value, 'key')}
-                      textInputProps={{
-                        error: uniqueKeys && items.some((i, y) => index !== y && i.key === item.key),
-                      }}
-                    />
-                  )}
-                </TableCell>
+                <TableCell>{Key(item, index)}</TableCell>
                 <TableCell className={css({ maxWidth: 320 })}>{Value(item)}</TableCell>
                 <TableCell align="right">
                   <EditorToolbarButton label="delete" icon="Delete" onClick={() => deleteItem(item)} />
