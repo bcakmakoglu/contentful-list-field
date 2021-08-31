@@ -19,7 +19,7 @@ import List from './List';
 import { Entity, InstanceParameters, Item, Tag } from '../types';
 import DropDown from './DropDown';
 import EntityList from './EntityList';
-import { createEntity, createItem, createTag, strip } from '../utils';
+import { createEntity, createItem, createTag } from '../utils';
 
 interface FieldProps {
   sdk: FieldExtensionSDK;
@@ -76,7 +76,7 @@ const Field = ({ sdk }: FieldProps) => {
     let value: Item['value'] = val;
     if (itemTaggable(item) && property === 'value') {
       // clear whitespace and split possible multiple tags
-      const tags = strip(val).split(',');
+      const tags = val.split(',');
       const newTags: Tag[] = [];
       let id = -1;
       tags.forEach((tag) => {
@@ -197,7 +197,7 @@ const Field = ({ sdk }: FieldProps) => {
             <Option value="" disabled selected>
               {valueName ? valueName : 'Select a value'}
             </Option>
-            {strip(valueOptions)
+            {valueOptions
               .split('|')
               .map((option) => (
                 <Option key={option} value={option}>
@@ -270,7 +270,7 @@ const Field = ({ sdk }: FieldProps) => {
         <Option value="" disabled>
           {keyName ? keyName : 'Select a key'}
         </Option>
-        {strip(keyOptions)
+        {keyOptions
           .split('|')
           .map((option) => (
             <Option
@@ -287,10 +287,14 @@ const Field = ({ sdk }: FieldProps) => {
       <TextField
         id="key"
         name="key"
+        key={item.id}
         labelText={keyName}
         value={item.key}
-        onChange={(e) => onChange(item, e.target.value, 'key')}
+        onChange={(e) => {
+          onChange(item, e.target.value, 'key')
+        }}
         textInputProps={{
+          type: 'text',
           error: uniqueKeys && items.some((i, y) => index !== y && i.key === item.key),
         }}
       />
@@ -333,10 +337,7 @@ const Field = ({ sdk }: FieldProps) => {
           </List>
         </TableBody>
       </Table>
-      <DropDown
-        onToggle={(open) => setDropDownOpen(open)}
-        onSelect={addNewItem}
-      />
+      <DropDown onToggle={(open) => setDropDownOpen(open)} onSelect={addNewItem} />
     </div>
   );
 };

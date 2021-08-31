@@ -38,7 +38,3 @@ export function createTag(tag?: Partial<Tag>): Tag {
     ...tag,
   };
 }
-
-export function strip(str: string): string {
-  return str.replace(/\s+/g, '');
-}

@@ -1,9 +1,8 @@
 import React, { ReactElement, useEffect, useState } from 'react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import Tag from './ListItem';
@@ -18,10 +17,7 @@ const List = ({ items: propitems, onSort = () => {}, children }: ListProps) => {
   const [items, setItems] = useState(propitems);
   useEffect(() => setItems(() => propitems), [propitems]);
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor)
   );
 
   return (
