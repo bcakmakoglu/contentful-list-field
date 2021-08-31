@@ -39,7 +39,7 @@ const Field = ({ sdk }: FieldProps) => {
   const {
     valueName = 'Value',
     keyName = 'Key',
-    valueOptions = undefined,
+    valueOptions = 'foo|bar',
     keyOptions = undefined,
     uniqueKeys = false,
     checkbox = false,
@@ -194,13 +194,13 @@ const Field = ({ sdk }: FieldProps) => {
             name="optionSelect"
             id="optionSelect"
           >
-            <Option value="" disabled selected>
+            <Option value="" disabled>
               {valueName ? valueName : 'Select a value'}
             </Option>
             {valueOptions
               .split('|')
               .map((option) => (
-                <Option key={option} value={option}>
+                <Option key={option} value={option} selected={item.value === option}>
                   {option}
                 </Option>
               ))}
