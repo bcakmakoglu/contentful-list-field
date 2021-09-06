@@ -24,6 +24,7 @@ You can pass these options when creating an app instance (i.e. applying the app 
 * valueName - an alternative name to display for the value property
 * keyName - an alternative name to display for the key property
 * uniqueKeys - enable validation check for unique keys
+* dropDownOptions - list of strings separated by a `|`, each string will be displayed as an option dropdown (ex: default|entities)
 
 ## Available Scripts
 

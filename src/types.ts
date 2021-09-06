@@ -7,6 +7,7 @@ export interface InstanceParameters {
   valueName?: string;
   keyName?: string;
   uniqueKeys?: boolean;
+  dropDownOptions?: string;
 }
 
 /** A Tag which represents a list item of the value list (needs taggable instance parameter to be enabled */

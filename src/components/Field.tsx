@@ -47,6 +47,7 @@ const Field = ({ sdk }: FieldProps) => {
     uniqueKeys = false,
     checkbox = false,
     taggable = false,
+    dropDownOptions = 'default'
   }: InstanceParameters = sdk.parameters?.instance ?? {};
   const itemTaggable = (item: Item) => Array.isArray(item.value) && taggable;
 
@@ -333,7 +334,7 @@ const Field = ({ sdk }: FieldProps) => {
           </List>
         </TableBody>
       </Table>
-      <DropDown onToggle={(open) => setDropDownOpen(open)} onSelect={addNewItem} />
+      <DropDown options={dropDownOptions} onToggle={(open) => setDropDownOpen(open)} onSelect={addNewItem} />
     </div>
   );
 };
@@ -408,8 +409,8 @@ const Row = ({ item, checkbox, deleteRow, select, keyComponent, valueComponent }
             />
           ) : null}
         </TableCell>
-        <TableCell className={css({ flex: 1 })}>{keyComponent}</TableCell>
-        <TableCell className={css({ flex: 1 })}>{valueComponent}</TableCell>
+        <TableCell className={css({ flex: '1 1 auto', maxWidth: 320 })}>{keyComponent}</TableCell>
+        <TableCell className={css({ flex: '1 1 auto', maxWidth: 320 })}>{valueComponent}</TableCell>
         <TableCell align="right">
           <EditorToolbarButton label="delete" icon="Delete" onClick={deleteRow} />
         </TableCell>
