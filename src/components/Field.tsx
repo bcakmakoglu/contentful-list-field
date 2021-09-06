@@ -39,7 +39,7 @@ const Field = ({ sdk }: FieldProps) => {
   const {
     valueName = 'Value',
     keyName = 'Key',
-    valueOptions = 'foo|bar',
+    valueOptions = undefined,
     keyOptions = undefined,
     uniqueKeys = false,
     checkbox = false,
