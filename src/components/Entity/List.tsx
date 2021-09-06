@@ -1,8 +1,9 @@
 import React, { ReactElement, useState } from 'react';
 import { DropdownList, DropdownListItem, EntityList, EntityListItem } from '@contentful/forma-36-react-components';
-import { Entity } from '../types';
-import EntityEditor from './EntityEditor';
-import List from './List';
+import { Entity } from '../../types';
+import Editor from './Editor';
+import List from '../List';
+import Item from './Item';
 
 interface ItemListProps {
   items: Entity[];
@@ -21,9 +22,9 @@ const EList = ({ items, children, onRemove = () => {}, onSave = () => {}, onSort
       <EntityList>
         <List items={items} onSort={onSort}>
           {items.map((item, i) => (
-            <EntityListItem
-              key={`item-${i}`}
-              title={`${item.id} - Entity ${item.title}`}
+            <Item
+              id={item.id}
+              title={item.title}
               dropdownListElements={
                 <DropdownList>
                   <DropdownListItem isTitle>Actions</DropdownListItem>
@@ -43,7 +44,7 @@ const EList = ({ items, children, onRemove = () => {}, onSave = () => {}, onSort
         </List>
       </EntityList>
       {current ? (
-        <EntityEditor
+        <Editor
           show={showEditor}
           entity={current}
           onClose={() => {

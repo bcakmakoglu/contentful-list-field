@@ -5,7 +5,6 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import Tag from './ListItem';
 
 interface ListProps {
   items: any[];
@@ -23,13 +22,7 @@ const List = ({ items: propitems, onSort = () => {}, children }: ListProps) => {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={items} strategy={verticalListSortingStrategy}>
-        {items.map((item, i) =>
-          children && children[i] ? (
-            <Tag key={item.id} id={`${items[i].id}`}>
-              {children[i]}
-            </Tag>
-          ) : null
-        )}
+        {children}
       </SortableContext>
     </DndContext>
   );

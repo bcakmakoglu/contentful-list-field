@@ -10,10 +10,10 @@ import {
   TableBody,
   EditorToolbarButton,
 } from '@contentful/forma-36-react-components';
-import { Entity } from '../types';
+import { Entity } from '../../types';
 import tokens from '@contentful/forma-36-tokens';
 import { css } from 'emotion';
-import List from './List';
+import List from '../List';
 
 interface EntityEditorProps {
   show?: boolean;
@@ -22,7 +22,7 @@ interface EntityEditorProps {
   onSave?: (entity: Entity) => void;
 }
 
-const EntityEditor = ({
+const Editor = ({
   entity: propEntity,
   show = false,
   onClose = () => {},
@@ -188,4 +188,4 @@ const EntityEditor = ({
   );
 };
 
-export default EntityEditor;
+export default Editor;

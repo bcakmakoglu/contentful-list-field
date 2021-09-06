@@ -17,8 +17,8 @@ import { FieldAPI, FieldExtensionSDK, WindowAPI } from '@contentful/app-sdk';
 import { css } from 'emotion';
 import List from './List';
 import { Entity, InstanceParameters, Item, Tag } from '../types';
-import DropDown from './DropDown';
-import EntityList from './EntityList';
+import DropDown from './Entity/DropDown';
+import EntityList from './Entity/List';
 import { createEntity, createItem, createTag } from '../utils';
 
 interface FieldProps {
