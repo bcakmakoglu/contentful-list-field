@@ -159,7 +159,10 @@ const Field = ({ sdk }: FieldProps) => {
                 removeValue(item, i);
               }}
               onSave={(entity) => {
-                saveValue(item, entity, (item.value as Entity[]).indexOf(entity));
+                const toSave = (item.value as Entity[]).find(item => item.id === entity.id);
+                if (toSave) {
+                  saveValue(item, entity, (item.value as Entity[]).indexOf(toSave));
+                }
               }}
               onSort={(entities) => {
                 const itemList = items.concat();
@@ -363,7 +366,10 @@ const Row = ({ item, checkbox, deleteRow, select, keyComponent, valueComponent }
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-            }) + ' CardDragHandle__CardDragHandle___2rqnO'
+              borderRight: '1px solid #cfd9e0',
+              width: '1.25rem',
+              backgroundColor: '#f7f9fa',
+            })
           }
         >
           <div

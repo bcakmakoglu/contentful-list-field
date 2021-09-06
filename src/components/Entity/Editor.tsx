@@ -175,7 +175,17 @@ const Row = ({ data, keyChange, valueChange, deleteRow }: RowProps) => {
       <TableRow>
         <TableCell
           align="center"
-          className={css({ minHeight: 70 }) + ' CardDragHandle__CardDragHandle___2rqnO'}
+          className={css({
+            minHeight: 70,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRight: '1px solid #cfd9e0',
+            width: '1.25rem',
+            backgroundColor: '#f7f9fa',
+            cursor: isDragging ? 'grabbing' : 'grab',
+          })}
         >
           <div
             {...attributes}

@@ -28,12 +28,24 @@ const Item = ({ id, title, dropdownListElements }: ItemProps) => {
           <div
             {...attributes}
             {...listeners}
-            className="CardDragHandle__CardDragHandle___2rqnO"
+            className={css({
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRight: '1px solid #cfd9e0',
+              width: '1.25rem',
+              backgroundColor: '#f7f9fa',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              '&:hover': {
+                backgroundColor: '#cfd9e0',
+              },
+            })}
           >
             <Icon color="muted" icon="Drag" />
           </div>
         }
-        title={`${id} - Entity ${title}`}
+        title={title}
         dropdownListElements={dropdownListElements}
       />
     </div>
