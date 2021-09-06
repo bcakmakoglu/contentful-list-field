@@ -159,7 +159,7 @@ const Field = ({ sdk }: FieldProps) => {
                 removeValue(item, i);
               }}
               onSave={(entity) => {
-                const toSave = (item.value as Entity[]).find(item => item.id === entity.id);
+                const toSave = (item.value as Entity[]).find((item) => item.id === entity.id);
                 if (toSave) {
                   saveValue(item, entity, (item.value as Entity[]).indexOf(toSave));
                 }
@@ -356,21 +356,31 @@ const Row = ({ item, checkbox, deleteRow, select, keyComponent, valueComponent }
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
-      <TableRow>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={css({
+        boxShadow: isDragging ? '1px 1px 15px 0px rgba(0,0,0,0.5)' : undefined,
+        position: 'relative',
+        zIndex: isDragging ? 99999 : 0,
+      })}
+    >
+      <TableRow
+        className={css({
+          display: 'flex',
+        })}
+      >
         <TableCell
           align="center"
-          className={
-            css({
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRight: '1px solid #cfd9e0',
-              width: '1.25rem',
-              backgroundColor: '#f7f9fa',
-            })
-          }
+          className={css({
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRight: '1px solid #cfd9e0',
+            width: '1.25rem',
+            backgroundColor: '#f7f9fa',
+          })}
         >
           <div
             {...attributes}
@@ -379,9 +389,13 @@ const Row = ({ item, checkbox, deleteRow, select, keyComponent, valueComponent }
               marginRight: 7,
               marginTop: 4,
               cursor: isDragging ? 'grabbing' : 'grab',
+              transition: 'all 250ms ease',
+              '&:hover': {
+                scale: '1.25',
+              },
             })}
           >
-            <Icon size="medium" color="muted" icon="Drag" />
+            <Icon size="medium" color={isDragging ? 'positive' : 'muted'} icon="DragTrimmed" />
           </div>
           {checkbox ? (
             <RadioButtonField
@@ -394,8 +408,8 @@ const Row = ({ item, checkbox, deleteRow, select, keyComponent, valueComponent }
             />
           ) : null}
         </TableCell>
-        <TableCell>{keyComponent}</TableCell>
-        <TableCell className={css({ maxWidth: 320 })}>{valueComponent}</TableCell>
+        <TableCell className={css({ flex: 1 })}>{keyComponent}</TableCell>
+        <TableCell className={css({ flex: 1 })}>{valueComponent}</TableCell>
         <TableCell align="right">
           <EditorToolbarButton label="delete" icon="Delete" onClick={deleteRow} />
         </TableCell>

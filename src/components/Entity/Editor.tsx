@@ -171,7 +171,16 @@ const Row = ({ data, keyChange, valueChange, deleteRow }: RowProps) => {
   };
 
   return (
-    <div style={style} ref={setNodeRef}>
+    <div
+      style={style}
+      ref={setNodeRef}
+      className={css({
+        boxShadow: isDragging ? '1px 1px 15px 0px rgba(0,0,0,0.5)' : undefined,
+        position: 'relative',
+        zIndex: isDragging ? 99999 : 0,
+        borderBottom: '0.5px solid #cfd9e0',
+      })}
+    >
       <TableRow>
         <TableCell
           align="center"
@@ -181,20 +190,28 @@ const Row = ({ data, keyChange, valueChange, deleteRow }: RowProps) => {
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            borderRight: '1px solid #cfd9e0',
             width: '1.25rem',
-            backgroundColor: '#f7f9fa',
-            cursor: isDragging ? 'grabbing' : 'grab',
+            borderRight: '0.5px solid #cfd9e0',
+            backgroundColor: '#f7f9fa'
           })}
         >
           <div
             {...attributes}
             {...listeners}
             className={css({
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#f7f9fa',
               cursor: isDragging ? 'grabbing' : 'grab',
+              transition: 'all 250ms ease',
+              '&:hover': {
+                scale: '1.25',
+              },
             })}
           >
-            <Icon color="muted" icon="Drag" />
+            <Icon color={isDragging ? 'positive' : 'muted'} icon="Drag" />
           </div>
         </TableCell>
         <TableCell>

@@ -19,11 +19,18 @@ const Item = ({ id, title, dropdownListElements }: ItemProps) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={css({
+        boxShadow: isDragging ? '1px 1px 15px 0px rgba(0,0,0,0.5)' : undefined,
+        position: 'relative',
+        zIndex: isDragging ? 99999 : 0,
+      })}
+    >
       <EntityListItem
         withThumbnail={false}
         withDragHandle={true}
-        isDragActive={isDragging}
         cardDragHandleComponent={
           <div
             {...attributes}
@@ -37,12 +44,14 @@ const Item = ({ id, title, dropdownListElements }: ItemProps) => {
               width: '1.25rem',
               backgroundColor: '#f7f9fa',
               cursor: isDragging ? 'grabbing' : 'grab',
+              transition: 'all 250ms ease',
               '&:hover': {
                 backgroundColor: '#cfd9e0',
+                scale: '1.1',
               },
             })}
           >
-            <Icon color="muted" icon="Drag" />
+            <Icon color={isDragging ? 'positive' : 'muted'} icon="Drag" />
           </div>
         }
         title={title}
