@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { ChangeEventHandler, MouseEventHandler, ReactElement, useEffect, useState } from 'react';
 import {
   EditorToolbarButton,
   Table,
@@ -11,6 +11,7 @@ import {
   Pill,
   Option,
   Button,
+  Icon,
 } from '@contentful/forma-36-react-components';
 import tokens from '@contentful/forma-36-tokens';
 import { FieldAPI, FieldExtensionSDK, WindowAPI } from '@contentful/app-sdk';
@@ -20,6 +21,8 @@ import { Entity, InstanceParameters, Item, Tag } from '../types';
 import DropDown from './Entity/DropDown';
 import EntityList from './Entity/List';
 import { createEntity, createItem, createTag } from '../utils';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface FieldProps {
   sdk: FieldExtensionSDK;
@@ -172,9 +175,12 @@ const Field = ({ sdk }: FieldProps) => {
                   const itemList = items.concat();
                   let id = -1;
                   if (item.value.length > 0 && id === -1) {
-                    id = parseInt((item.value as Entity[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id, 10);
+                    id = parseInt(
+                      (item.value as Entity[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id,
+                      10
+                    );
                   }
-                  id++
+                  id++;
                   item.value = [...(item.value as Entity[]), createEntity({ id: String(id) })];
                   field?.setValue(itemList);
                 }}
@@ -198,13 +204,11 @@ const Field = ({ sdk }: FieldProps) => {
             <Option value="" disabled>
               {valueName ? valueName : 'Select a value'}
             </Option>
-            {valueOptions
-              .split('|')
-              .map((option) => (
-                <Option key={option} value={option} selected={item.value === option}>
-                  {option}
-                </Option>
-              ))}
+            {valueOptions.split('|').map((option) => (
+              <Option key={option} value={option} selected={item.value === option}>
+                {option}
+              </Option>
+            ))}
           </SelectField>
         ) : (
           <>
@@ -271,18 +275,16 @@ const Field = ({ sdk }: FieldProps) => {
         <Option value="" disabled>
           {keyName ? keyName : 'Select a key'}
         </Option>
-        {keyOptions
-          .split('|')
-          .map((option) => (
-            <Option
-              key={option}
-              disabled={uniqueKeys && items.some((i, y) => index !== y && i.key === option)}
-              selected={option === item.key}
-              value={option}
-            >
-              {option}
-            </Option>
-          ))}
+        {keyOptions.split('|').map((option) => (
+          <Option
+            key={option}
+            disabled={uniqueKeys && items.some((i, y) => index !== y && i.key === option)}
+            selected={option === item.key}
+            value={option}
+          >
+            {option}
+          </Option>
+        ))}
       </SelectField>
     ) : (
       <TextField
@@ -292,7 +294,7 @@ const Field = ({ sdk }: FieldProps) => {
         labelText={keyName}
         value={item.key}
         onChange={(e) => {
-          onChange(item, e.target.value, 'key')
+          onChange(item, e.target.value, 'key');
         }}
         textInputProps={{
           type: 'text',
@@ -313,32 +315,85 @@ const Field = ({ sdk }: FieldProps) => {
             }}
           >
             {items.map((item, index) => (
-              <TableRow key={`row-${item.id}`}>
-                {checkbox ? (
-                  <TableCell align="center">
-                    <RadioButtonField
-                      checked={item.checked}
-                      value="true"
-                      id="checkbox"
-                      name="checkbox"
-                      labelText=""
-                      onChange={() => {
-                        setActiveOption(item);
-                      }}
-                    />
-                  </TableCell>
-                ) : null}
-                <TableCell>{Key(item, index)}</TableCell>
-                <TableCell className={css({ maxWidth: 320 })}>{Value(item)}</TableCell>
-                <TableCell align="right">
-                  <EditorToolbarButton label="delete" icon="Delete" onClick={() => deleteItem(item)} />
-                </TableCell>
-              </TableRow>
+              <Row
+                key={`field-row-${index}`}
+                item={item}
+                checkbox={checkbox}
+                keyComponent={Key(item, index)}
+                valueComponent={Value(item)}
+                select={() => {
+                  setActiveOption(item);
+                }}
+                deleteRow={() => deleteItem(item)}
+              />
             ))}
           </List>
         </TableBody>
       </Table>
       <DropDown onToggle={(open) => setDropDownOpen(open)} onSelect={addNewItem} />
+    </div>
+  );
+};
+
+interface RowProps {
+  item: Item;
+  checkbox: InstanceParameters['checkbox'];
+  keyComponent: ReactElement;
+  valueComponent: ReactElement;
+  select: ChangeEventHandler<HTMLInputElement>;
+  deleteRow: MouseEventHandler;
+}
+
+const Row = ({ item, checkbox, deleteRow, select, keyComponent, valueComponent }: RowProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition ?? '',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <TableRow>
+        <TableCell
+          align="center"
+          className={
+            css({
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }) + ' CardDragHandle__CardDragHandle___2rqnO'
+          }
+        >
+          <div
+            {...attributes}
+            {...listeners}
+            className={css({
+              marginRight: 7,
+              marginTop: 4,
+              cursor: isDragging ? 'grabbing' : 'grab',
+            })}
+          >
+            <Icon size="medium" color="muted" icon="Drag" />
+          </div>
+          {checkbox ? (
+            <RadioButtonField
+              checked={item.checked}
+              value="true"
+              id="checkbox"
+              name="checkbox"
+              labelText=""
+              onChange={select}
+            />
+          ) : null}
+        </TableCell>
+        <TableCell>{keyComponent}</TableCell>
+        <TableCell className={css({ maxWidth: 320 })}>{valueComponent}</TableCell>
+        <TableCell align="right">
+          <EditorToolbarButton label="delete" icon="Delete" onClick={deleteRow} />
+        </TableCell>
+      </TableRow>
     </div>
   );
 };

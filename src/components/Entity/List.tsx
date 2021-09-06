@@ -1,5 +1,5 @@
 import React, { ReactElement, useState } from 'react';
-import { DropdownList, DropdownListItem, EntityList, EntityListItem } from '@contentful/forma-36-react-components';
+import { DropdownList, DropdownListItem, EntityList } from '@contentful/forma-36-react-components';
 import { Entity } from '../../types';
 import Editor from './Editor';
 import List from '../List';
