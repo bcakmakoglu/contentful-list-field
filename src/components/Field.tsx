@@ -170,11 +170,12 @@ const Field = ({ sdk }: FieldProps) => {
                 icon="PlusCircle"
                 onClick={() => {
                   const itemList = items.concat();
-                  const id = parseInt(
-                    (item.value as Entity[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id,
-                    10
-                  );
-                  item.value = [...(item.value as Entity[]), createEntity({ id: `${id + 1}` })];
+                  let id = -1;
+                  if (item.value.length > 0 && id === -1) {
+                    id = parseInt((item.value as Entity[]).reduce((prev, curr) => (prev.id > curr.id ? prev : curr)).id, 10);
+                  }
+                  id++
+                  item.value = [...(item.value as Entity[]), createEntity({ id: String(id) })];
                   field?.setValue(itemList);
                 }}
                 style={{ marginTop: tokens.spacingS }}
