@@ -28,16 +28,9 @@ const Item = ({ id, title, dropdownListElements }: ItemProps) => {
           <div
             {...attributes}
             {...listeners}
-            className={css({
-              cursor: isDragging ? 'grabbing' : 'grab',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            })}
+            className="CardDragHandle__CardDragHandle___2rqnO"
           >
-            <Icon color="muted" icon="Drag">
-              Foobar
-            </Icon>
+            <Icon color="muted" icon="Drag" />
           </div>
         }
         title={`${id} - Entity ${title}`}
